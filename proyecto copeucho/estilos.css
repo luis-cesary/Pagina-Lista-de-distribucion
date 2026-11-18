@@ -1,0 +1,238 @@
+body {
+  margin: 0;
+  background: #f42534;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+}
+
+h3 {
+color:white;
+}
+h2 {
+color:white;
+}
+.barra-superior {
+  height: 12px;
+  background-color: #0b5fa5;
+}
+
+.banner {
+  background-color: #f42534;
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.logo {
+  position: absolute;
+  left: 30px;
+}
+
+.logo img {
+  height: 90px;
+}
+
+.contenido-banner {
+  text-align: center;
+  color: white;
+}
+
+.contenido-banner h1 {
+  font-size: 24px;
+  margin-bottom: 15px;
+  font-weight: bold;
+}
+
+.btn-admin {
+  background-color: #6b3f25 !important;
+  color: white !important;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 6px;
+  font-size: 15px;
+}
+
+.btn-admin:hover {
+  background-color: #4e2d1b !important;
+}
+
+.navbar {
+  background-color: #0b5fa5 !important;
+}
+
+.navbar .nav-link,
+.navbar .navbar-brand {
+  color: white !important;
+  font-weight: bold;
+}
+
+.navbar .nav-link:hover {
+  text-decoration: underline;
+}
+
+#panelUpload {
+  display: none;
+  text-align: center;
+  padding: 15px;
+  background: red;
+  border-radius: 10px;
+  max-width: 420px;
+  margin: 15px auto;
+}
+#search-container{
+    max-width:900px; margin:0 auto; padding:20px 40px;
+    background:rgba(255,255,255,0.15);
+    border-radius:10px;
+    box-shadow:0px 4px 10px rgba(0,0,0,0.2);
+}
+
+.text-card {
+  background: rgba(255,255,255,0.20);
+  padding: 25px 30px;
+  border-radius: 12px;
+  max-width: 95%;
+  margin: 40px auto 30px auto;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.25);
+}
+/* ===== CAJA CENTRAL DE BUSQUEDA ===== */
+.search-card {
+  background: rgba(255,255,255,0.20);
+  padding: 25px 30px;
+  border-radius: 12px;
+  max-width: 950px;
+  margin: 40px auto 30px auto;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.25);
+}
+
+.search-card label {
+  color: white;
+  font-weight: bold;
+  font-size: 13px;
+}
+
+.search-card input {
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+/* ===== BOTONES ===== */
+.search-card .btn-primary {
+  background: #0d6efd;
+  border: none;
+  padding: 8px 22px;
+  font-weight: bold;
+}
+
+.search-card .btn-secondary {
+  background: #6c757d;
+  border: none;
+  padding: 8px 22px;
+  font-weight: bold;
+}
+
+/* ===== DATATABLE ESTILO IMAGEN ===== */
+table.dataTable thead th {
+  background: #f42534 !important;
+  color: white !important;
+  text-align: center;
+  font-size: 13px;
+}
+
+table.dataTable tbody td {
+  font-size: 13px;
+  white-space: normal !important;
+}
+
+/* ===== CONTENEDOR TABLA ===== */
+#results {
+  max-width: 100%;
+  padding: 0 20px;
+}
+
+/* ===== TEXTOS DE DATATABLES EN BLANCO ===== */
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_paginate {
+  color: white !important;
+  font-weight: bold;
+}
+
+/* Input de BUSCAR en blanco con fondo oscuro */
+.dataTables_wrapper .dataTables_filter input {
+  color: white !important;
+  background-color: rgba(0,0,0,0.25);
+  border: 1px solid white;
+}
+
+/* Select "Mostrar registros" */
+.dataTables_wrapper .dataTables_length select {
+  color: white !important;
+  background-color: rgba(0,0,0,0.25);
+  border: 1px solid white;
+}
+
+/* Flechas de paginación */
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+  color: white !important;
+  font-weight: bold;
+}
+
+/* Botón activo */
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+  background: white !important;
+  color: #d65a00 !important;
+  border-radius: 5px;
+}
+/* ==============================
+   BARRA INFERIOR DATATABLES
+============================== */
+
+/* Texto "Mostrando X a Y de Z registros" */
+.dataTables_info {
+  color: white !important;
+  font-weight: bold;
+  padding-top: 10px;
+}
+
+/* Contenedor de la paginación */
+.dataTables_paginate {
+  padding-top: 6px;
+}
+
+/* Botones Anterior, Siguiente y números */
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+  color: white !important;
+  background: transparent !important;
+  border: 1px solid white !important;
+  border-radius: 6px;
+  margin: 0 3px;
+  padding: 6px 12px;
+  font-weight: bold;
+}
+
+/* Hover de botones */
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+  background: white !important;
+  color: #f42534 !important;
+}
+
+/* Página activa */
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+  background: white !important;
+  color: #f42534 !important;
+  border-radius: 6px;
+}
+
+/* Deshabilitados (cuando no hay anterior o siguiente) */
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+  color: rgba(255,255,255,0.5) !important;
+  border-color: rgba(255,255,255,0.5) !important;
+}
+
+/* Evita que DataTables ponga fondo blanco raro */
+.dataTables_wrapper .dataTables_paginate .paginate_button:active {
+  box-shadow: none !important;
+}
+

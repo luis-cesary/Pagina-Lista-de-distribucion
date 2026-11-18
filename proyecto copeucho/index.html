@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Administrador de Excel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="estilos.css">
+
+  <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+</head>
+
+<body>
+
+<div class="barra-superior"></div>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Inicio</a>
+
+    <div class="collapse navbar-collapse">
+      <ul class="navbar-nav mx-auto gap-3">
+        <li class="nav-item"><a class="nav-link" href="pagina1.html">Alertas Dynatrace preparación</a></li>
+        <li class="nav-item"><a class="nav-link" href="pagina2.html">Escalamientos Coopeuch</a></li>
+        <li class="nav-item"><a class="nav-link" href="pagina3.html">Alertas Dynatrace</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="banner">
+  <div class="logo">
+    <img src="img/logo.png">
+  </div>
+  <div class="contenido-banner">
+    <h1>Administrar Excel</h1>
+    <button class="btn btn-admin" id="btnMostrarUpload">🔐 Subir Excel</button>
+  </div>
+</div>
+
+<div class="container mt-4 text-center">
+
+  <div id="panelUpload">
+    <label style="color:white">Contraseña:</label><br>
+    <input type="password" id="passUpload" class="form-control mb-2" style="max-width:200px;margin:auto;">
+    <button class="btn btn-primary mb-2" id="btnValidarPass">Validar</button>
+
+    <div id="zonaArchivo" style="display:none;">
+      <input type="file" id="fileUpload" class="form-control mb-2" accept=".xlsx,.xls">
+      <button class="btn btn-success" id="btnSubir">⬆ Subir y Reemplazar</button>
+    </div>
+  </div>
+
+  <div id="loader" style="display:none;margin-top:15px;">
+    <img src="https://i.gifer.com/ZZ5H.gif" width="60"><br>
+    Procesando...
+  </div>
+
+</div>
+
+<script>
+const PASSWORD_CORRECTA = "Banco2025!";
+const API_URL = "http://127.0.0.1:5000";  // ⚠️ cambia por tu IP real
+
+let archivoTemporal = null;
+
+document.getElementById("btnMostrarUpload").onclick = () => {
+  const p = document.getElementById("panelUpload");
+  p.style.display = p.style.display === "block" ? "none" : "block";
+  document.getElementById("zonaArchivo").style.display = "none";
+};
+
+document.getElementById("btnValidarPass").onclick = () => {
+  const pass = document.getElementById("passUpload").value;
+  if (pass === PASSWORD_CORRECTA) {
+    document.getElementById("zonaArchivo").style.display = "block";
+    alert("✔ Acceso concedido");
+  } else {
+    alert("❌ Contraseña incorrecta");
+  }
+};
+
+document.getElementById("fileUpload").addEventListener("change", e => {
+  archivoTemporal = e.target.files[0];
+});
+
+document.getElementById("btnSubir").onclick = () => {
+  if (!archivoTemporal) {
+    alert("Seleccione un archivo primero.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("archivo", archivoTemporal);
+
+  document.getElementById("loader").style.display = "block";
+
+  fetch(API_URL + "/upload", {
+    method: "POST",
+    body: formData
+  })
+  .then(r => r.json())
+  .then(res => {
+    document.getElementById("loader").style.display = "none";
+    alert(res.msg);
+  })
+  .catch(() => {
+    document.getElementById("loader").style.display = "none";
+    alert("Error de conexión con el servidor");
+  });
+};
+</script>
+
+</body>
+</html>

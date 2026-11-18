@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Escalamiento coopeuch</title>
+  <link rel="icon" type="image/png" href="https://enrolamientosocio.coopeuch.cl/favicon.ico">
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="estilos.css">
+
+  <!-- Librerías -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+  <style>
+    table thead th {
+      background: #0b5fa5;
+      color: white;
+      text-align: center;
+    }
+    table td {
+      white-space: normal !important;
+      word-wrap: break-word;
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- BARRA SUPERIOR -->
+<div class="barra-superior"></div>
+
+<!-- NAV -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Inicio</a>
+
+    <div class="collapse navbar-collapse">
+      <ul class="navbar-nav mx-auto gap-3">
+        <li class="nav-item"><a class="nav-link" href="pagina1.html">Alertas Dynatrace preparación</a></li>
+        <li class="nav-item"><a class="nav-link" href="pagina2.html">Escalamientos Coopeuch</a></li>
+        <li class="nav-item"><a class="nav-link" href="pagina3.html">Alertas Dynatrace</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- TÍTULO -->
+<div class="container mt-4"style="max-width: 100%;">
+  <h3 class="text-center">Escalamiento coopeuch</h3>
+  <hr>
+
+<div id="search-container" class="search-card">
+
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <label>Titulo alerta</label>
+      <input type="text" id="titulo" class="form-control">
+    </div>
+    <div class="col-md-6">
+      <label>Detalle</label>
+      <input type="text" id="escalar" class="form-control">
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <label>Primer llamado</label>
+      <input type="text" id="primer_llamado" class="form-control">
+    </div>
+    <div class="col-md-6">
+      <label>Segundo llamado</label>
+      <input type="text" id="detalle" class="form-control">
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-12">
+      <label>Correo Destino</label>
+      <input type="text" id="correo" class="form-control">
+    </div>
+  </div>
+
+  <div class="text-start mt-3">
+    <button class="btn btn-primary me-2" onclick="buscar()">Buscar</button>
+    <button class="btn btn-secondary" onclick="limpiar()">Borrar</button>
+  </div>
+
+</div>
+    <div  class="text-card">
+        <h2 id="fila"  ></h2>
+    </div>
+    <!-- LOADER TABLA -->
+    <div id="loaderTabla" style="display:none; text-align:center; margin-top:20px;">
+      <img src="https://i.gifer.com/ZZ5H.gif" width="60">
+      <p style="color:white; font-weight:bold;">Cargando datos...</p>
+    </div>
+    <div id="results"></div>
+</div>
+
+<script>
+/* ============================================================
+   CONFIGURACIONES
+============================================================ */
+const API_URL = "http://127.0.0.1:5000"; // CAMBIAR A TU IP
+const HOJA_INDEX = 2; // Hoja 3
+
+let tablaDT = null;
+
+
+/* ============================================================
+   LOADER FUNCTIONS
+============================================================ */
+function mostrarLoaderTabla() {
+  document.getElementById("loaderTabla").style.display = "block";
+  document.getElementById("results").innerHTML = "";
+}
+
+function ocultarLoaderTabla() {
+  document.getElementById("loaderTabla").style.display = "none";
+}
+
+/* ============================================================
+   Cargar Excel desde el servidor
+============================================================ */
+mostrarLoaderTabla();
+
+/* ============================================================
+   Cargar Excel desde el servidor
+============================================================ */
+fetch(API_URL + "/excel")
+  .then(r => r.arrayBuffer())
+  .then(data => {
+    debugger
+    const wb = XLSX.read(data, { type: "array" });
+
+    const nombreHoja = wb.SheetNames[HOJA_INDEX];
+    const hoja = wb.Sheets[nombreHoja];
+
+    let rows = XLSX.utils.sheet_to_json(hoja, { header: 1 });
+
+    construirTabla(rows);
+    ocultarLoaderTabla();
+  })
+  .catch(err => {
+    ocultarLoaderTabla();
+    console.error("Error cargando Excel:", err);
+    alert("❌ Error cargando datos del Excel. Verifica el servidor.");
+  });
+
+/* ============================================================
+   Construir tabla dinámica con encabezados reales
+============================================================ */
+function construirTabla(rows) {
+  debugger
+  if (rows.length === 0) return;
+
+  const encabezados = rows[5];   // Primera fila = encabezados reales
+  const filas1 = rows[6];
+  const filas2 = rows[7];
+  const filas3 = rows[8];
+  const filasExtras = [
+      rows[1],
+      rows[2],
+      rows[3],
+      rows[4]
+  ];
+  //const datos = rows.slice(9);   // Resto de filas
+  document.getElementById("fila").innerHTML = filas1;
+  const datos = filasExtras.concat(rows.slice(9));
+  let html = `<table id="tablaDatos" class="display table table-striped table-bordered" style="width:100%">
+              <thead><tr>`;
+
+  // Crear encabezados
+  encabezados.forEach(col => {
+    html += `<th>${col || "Sin Nombre"}</th>`;
+  });
+
+  html += `</tr></thead><tbody>`;
+
+  // Crear filas
+  datos.forEach(row => {
+    html += "<tr>";
+    encabezados.forEach((_, colIndex) => {
+      html += `<td>${row[colIndex] || ""}</td>`;
+    });
+    html += "</tr>";
+  });
+
+  html += "</tbody></table>";
+
+  document.getElementById("results").innerHTML = html;
+
+  inicializarDataTable();
+}
+
+
+/* ============================================================
+   Inicializar DataTable
+============================================================ */
+function inicializarDataTable() {
+   debugger
+  if (tablaDT) tablaDT.destroy();
+
+  tablaDT = $("#tablaDatos").DataTable({
+      pageLength: 100,
+      responsive: true,
+      autoWidth: false,
+      scrollX: true,
+      order: [],
+      language: {
+        url: "https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json"
+      }
+  });
+
+}
+
+    /* ============================================================
+   BUSCAR POR CAMPOS
+============================================================ */
+function buscar(){
+  if (!tablaDT) return;
+
+  // Limpiar búsquedas anteriores
+  tablaDT.columns().search("");
+
+  // Aplicar filtros por columna
+  tablaDT.column(0).search($("#titulo").val());          // Titulo alerta
+  tablaDT.column(1).search($("#escalar").val());         // Cuando escalar
+  tablaDT.column(2).search($("#primer_llamado").val());  // Primer llamado
+  tablaDT.column(3).search($("#detalle").val());         // Segundo llamado
+  tablaDT.column(4).search($("#correo").val());          // Correo destino
+
+  tablaDT.draw();
+}
+
+/* ============================================================
+   LIMPIAR FILTROS
+============================================================ */
+function limpiar(){
+  $("#titulo").val("");
+  $("#escalar").val("");
+  $("#primer_llamado").val("");
+  $("#detalle").val("");
+  $("#correo").val("");
+
+  if (tablaDT){
+    tablaDT.columns().search("");
+    tablaDT.draw();
+  }
+}
+
+
+</script>
+
+</body>
+</html>

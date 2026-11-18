@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Alertas Dynatrace preparación</title>
+  <link rel="icon" type="image/png" href="https://enrolamientosocio.coopeuch.cl/favicon.ico">
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="estilos.css">
+
+  <!-- Librerías -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <style>
+    table thead th {
+      background: #0b5fa5;
+      color: white;
+      text-align: center;
+    }
+    table td {
+      white-space: normal !important;
+      word-wrap: break-word;
+    }
+  </style>
+
+</head>
+
+<body>
+
+<!-- BARRA SUPERIOR -->
+<div class="barra-superior"></div>
+
+<!-- NAV -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">Inicio</a>
+
+    <div class="collapse navbar-collapse">
+      <ul class="navbar-nav mx-auto gap-3">
+        <li class="nav-item"><a class="nav-link" href="pagina1.html">Alertas Dynatrace preparación</a></li>
+        <li class="nav-item"><a class="nav-link" href="pagina2.html">Escalamientos Coopeuch</a></li>
+        <li class="nav-item"><a class="nav-link" href="pagina3.html">Alertas Dynatrace</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- TÍTULO -->
+<div class="container mt-4" style="max-width: 100%;">
+  <h3 class="text-center">Alertas Dynatrace preparación</h3>
+  <hr>
+
+  <!-- FORMULARIO DE BÚSQUEDA -->
+  <div id="search-container" class="search-card">
+
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label>Titulo alerta</label>
+        <input type="text" id="titulo" class="form-control">
+      </div>
+      <div class="col-md-6">
+        <label>Cuando escalar</label>
+        <input type="text" id="escalar" class="form-control">
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label>Primer llamado</label>
+        <input type="text" id="primer_llamado" class="form-control">
+      </div>
+      <div class="col-md-6">
+        <label>Segundo llamado</label>
+        <input type="text" id="detalle" class="form-control">
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-12">
+        <label>Correo Destino</label>
+        <input type="text" id="correo" class="form-control">
+      </div>
+    </div>
+
+    <div class="text-start mt-3">
+      <button class="btn btn-primary me-2" onclick="buscar()">Buscar</button>
+      <button class="btn btn-secondary" onclick="limpiar()">Borrar</button>
+    </div>
+  </div>
+    <!-- LOADER TABLA -->
+    <div id="loaderTabla" style="display:none; text-align:center; margin-top:20px;">
+      <img src="https://i.gifer.com/ZZ5H.gif" width="60">
+      <p style="color:white; font-weight:bold;">Cargando datos...</p>
+    </div>
+  <!-- TABLA -->
+  <div id="results"></div>
+</div>
+
+
+<script>
+/* ============================================================
+   CONFIGURACIONES
+============================================================ */
+//const API_URL = "http://10.90.0.102:5000";
+const API_URL = "http://127.0.0.1:5000";
+const HOJA_INDEX = 0;
+let tablaDT = null;
+
+/* ============================================================
+   LOADER FUNCTIONS
+============================================================ */
+function mostrarLoaderTabla() {
+  document.getElementById("loaderTabla").style.display = "block";
+  document.getElementById("results").innerHTML = "";
+}
+
+function ocultarLoaderTabla() {
+  document.getElementById("loaderTabla").style.display = "none";
+}
+
+/* ============================================================
+   Cargar Excel desde el servidor
+============================================================ */
+
+
+cargarExcel();
+
+
+async function cargarExcel() {
+  try {
+    mostrarLoaderTabla();
+    const response = await fetch(API_URL + "/excel");
+
+    if (!response.ok) {
+      throw new Error("Error obteniendo el archivo Excel");
+    }
+
+    const data = await response.arrayBuffer();
+
+    const wb = XLSX.read(data, { type: "array" });
+
+    const nombreHoja = wb.SheetNames[HOJA_INDEX];
+    const hoja = wb.Sheets[nombreHoja];
+
+    const rows = XLSX.utils.sheet_to_json(hoja, { header: 1 });
+
+    construirTabla(rows);
+  } catch (err) {
+    console.error("Error cargando Excel:", err);
+    alert("❌ Error cargando datos del Excel. Verifica el servidor.");
+  } finally {
+    ocultarLoaderTabla();
+  }
+}
+
+
+
+/* ============================================================
+   Construir tabla DataTables
+============================================================ */
+function construirTabla(rows) {
+
+  if (rows.length === 0) return;
+
+  const encabezados = rows[0];
+  const datos = rows.slice(1);
+
+  let html = `<table id="tablaDatos" class="display table table-striped table-bordered" style="width:100%">
+                <thead><tr>`;
+
+  encabezados.forEach(col => {
+    html += `<th>${col || "Sin Nombre"}</th>`;
+  });
+
+  html += `</tr></thead><tbody>`;
+
+  datos.forEach(row => {
+    html += "<tr>";
+    encabezados.forEach((_, colIndex) => {
+      html += `<td>${row[colIndex] || ""}</td>`;
+    });
+    html += "</tr>";
+  });
+
+  html += "</tbody></table>";
+
+  document.getElementById("results").innerHTML = html;
+
+  inicializarDataTable();
+}
+
+
+/* ============================================================
+   Inicializar DataTable
+============================================================ */
+function inicializarDataTable() {
+
+  if (tablaDT) tablaDT.destroy();
+
+  tablaDT = $("#tablaDatos").DataTable({
+      pageLength: 100,
+      responsive: true,
+      autoWidth: false,
+      scrollX: true,
+      language: {
+        url: "https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json"
+      }
+  });
+
+}
+
+
+/* ============================================================
+   BUSCAR POR CAMPOS
+============================================================ */
+function buscar(){
+  if (!tablaDT) return;
+
+  tablaDT.columns().search("");
+
+  tablaDT.column(0).search($("#titulo").val());
+  tablaDT.column(1).search($("#escalar").val());
+  tablaDT.column(2).search($("#primer_llamado").val());
+  tablaDT.column(3).search($("#detalle").val());
+  tablaDT.column(4).search($("#correo").val());
+
+  tablaDT.draw();
+}
+
+
+/* ============================================================
+   LIMPIAR
+============================================================ */
+function limpiar(){
+  $("#titulo").val("");
+  $("#escalar").val("");
+  $("#primer_llamado").val("");
+  $("#detalle").val("");
+  $("#correo").val("");
+
+  if (tablaDT){
+    tablaDT.columns().search("");
+    tablaDT.draw();
+  }
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buscador de Escalamientos Banco Estado</title>
+  <link rel="icon" type="image/png" href="https://www.bancoestado.cl/favicon.ico">
+
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #ff7f32;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Logo */
+    .header-logo {
+      text-align: left;
+      padding: 10px 20px;
+    }
+    .header-logo img {
+      max-width: 120px;
+      height: auto;
+    }
+
+    h2 {
+      text-align: center;
+      font-size: 1.8em;
+      font-weight: bold;
+      color: #fff;
+      margin-bottom: 20px;
+    }
+
+    /* Formulario */
+    #search-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 10px;
+    }
+
+    .form-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 15px;
+    }
+
+    .form-group {
+      flex: 0 0 48%;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #fff;
+      font-size: 0.9em;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      font-size: 0.9em;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+
+    input[type="text"]:focus {
+      border-color: #007bff;
+      box-shadow: 0 0 8px rgba(0,123,255,0.2);
+      outline: none;
+    }
+
+    .buttons {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    button {
+      padding: 12px 25px;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+      font-size: 1.1em;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      box-shadow: 0 6px 10px rgba(0,0,0,0.2);
+      margin: 8px;
+    }
+
+    button:nth-of-type(1) { background: linear-gradient(45deg, #007bff, #00a1ff); }
+    button:nth-of-type(1):hover { background: linear-gradient(45deg, #0056b3, #0080ff); transform: scale(1.1); }
+    button:nth-of-type(2) { background: linear-gradient(45deg, #6c757d, #8a8f93); }
+    button:nth-of-type(2):hover { background: linear-gradient(45deg, #5a6268, #707578); transform: scale(1.1); }
+
+    #results {
+      margin: 30px auto;
+      max-width: 95%;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      background-color: #fff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+      font-size: 0.9em;
+    }
+
+    th {
+      background-color: #d35400;
+      color: white;
+    }
+
+    tr:nth-child(even) { background-color: #fbeee6; }
+
+    /* Loader */
+    #loader {
+      display: none;
+      text-align: center;
+      margin-top: 20px;
+    }
+    #loader img {
+      width: 80px;
+      height: 80px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- 🏦 Logo BancoEstado -->
+<div class="header-logo">
+  <img src="https://www.ovejeronoticias.cl/wp-content/uploads/2022/07/logo-banco-estado_fb-2048x2048.jpg" alt="BancoEstado">
+</div>
+
+<!-- 🔍 Cuadro de búsqueda -->
+<div id="search-container">
+  <div class="form-row">
+    <div class="form-group">
+      <label for="ip">DIRECCION IP</label>
+      <input type="text" id="ip">
+    </div>
+    <div class="form-group">
+      <label for="hostname">NOMBRE MAQUINA</label>
+      <input type="text" id="hostname">
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="descripcion">DESCRIPCION</label>
+      <input type="text" id="descripcion">
+    </div>
+    <div class="form-group">
+      <label for="detalle">DETALLE</label>
+      <input type="text" id="detalle">
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group" style="flex: 0 0 100%;">
+      <label for="check_nombre">NOMBRE DEL CHECK</label>
+      <input type="text" id="check_nombre">
+    </div>
+  </div>
+
+  <div class="buttons">
+    <button onclick="search()">Buscar</button>
+    <button onclick="clearSearch()">Borrar</button>
+  </div>
+</div>
+
+<!-- Loader -->
+<div id="loader">
+  <img src="https://i.gifer.com/ZZ5H.gif" alt="Procesando...">
+  <p style="color:white; font-weight:bold;">Procesando información...</p>
+</div>
+
+<!-- 📊 Resultados -->
+<div id="results"></div>
+
+
+<script>
+  // 📌 Datos en líneas separadas por tabulaciones
+  const dataLines = `
+192.168.188.113	ATM-CQN.bancoestado.cl	F5 - Virtual	-	Check F5	Tennant	Escalamiento ing. Dedicado / Notificación correo	Turno ITQ / Turno BancoEstado	Telecomunicaciones	dltelecomunicaciones@bancoestado.cl
+192.168.188.113	ATM-CQN.bancoestado.cl	F5 - Virtual	-	Check Network	Tennant	Notificación correo	Notificación correo	Telecomunicaciones	dltelecomunicaciones@bancoestado.cl
+192.168.107.167	NAV-KNS1-F5-Default.bancoestado.cl	Interfaz (F5 Virtua)	4/0.2	Status	Tennant	Escalamiento ing. Dedicado / Notificación correo	Turno ITQ / Turno BancoEstado	Telecomunicaciones	dltelecomunicaciones@bancoestado.cl
+192.168.107.167	NAV-KNS1-F5-Default.bancoestado.cl	F5 - Virtual	F5 - Virtual	Check F5	Tennant	Escalamiento ing. Dedicado / Notificación correo	Turno ITQ / Turno BancoEstado	Telecomunicaciones	dltelecomunicaciones@bancoestado.cl
+192.168.107.167	NAV-KNS1-F5-Default.bancoestado.cl	Interfaz (F5 Virtua)	4/mgmt	Interfaz	Tennant	Escalamiento ing. Dedicado / Notificación correo	Turno ITQ / Turno BancoEstado	Telecomunicaciones	dltelecomunicaciones@bancoestado.cl
+192.168.107.167	NAV-KNS1-F5-Default.bancoestado.cl	Interfaz (F5 Virtua)	4/mgmt	Uso de Ancho de Banda (%)	Tennant	Escalamiento ing. Dedicado / Notificación correo	Turno ITQ / Turno BancoEstado	Telecomunicaciones	dltelecomunicaciones@bancoestado.cl
+192.168.107.167	NAV-KNS1-F5-Default.bancoestado.cl	Interfaz (F5 Virtua)	4/mgmt	Status	Tennant	Escalamiento ing. Dedicado / Notificación correo	Turno ITQ / Turno BancoEstado	Telecomunicaciones	dltelecomunicaciones@bancoestado.cl
+  `.trim().split('\n');
+
+
+  const headers = ["DIRECCION IP","NOMBRE MAQUINA","DESCRIPCION","DETALLE","NOMBRE DEL CHECK","PLATAFORMA","Horario hábil","Horario no hábil","Area y Notificacion","correo"];
+  const csvData = dataLines.map(line => {
+    const cols = line.split('\t');
+    let obj = {};
+    headers.forEach((h, i) => obj[h] = cols[i] || "");
+    return obj;
+  });
+
+  function search() {
+    document.getElementById("results").innerHTML = "";
+    document.getElementById("loader").style.display = "block";
+
+    setTimeout(() => {
+      const ip = document.getElementById("ip").value.toLowerCase();
+      const hostname = document.getElementById("hostname").value.toLowerCase();
+      const descripcion = document.getElementById("descripcion").value.toLowerCase();
+      const detalle = document.getElementById("detalle").value.toLowerCase();
+      const check_nombre = document.getElementById("check_nombre").value.toLowerCase();
+
+      const results = csvData.filter(row =>
+        row["DIRECCION IP"].toLowerCase().includes(ip) &&
+        row["NOMBRE MAQUINA"].toLowerCase().includes(hostname) &&
+        row["DESCRIPCION"].toLowerCase().includes(descripcion) &&
+        row["DETALLE"].toLowerCase().includes(detalle) &&
+        row["NOMBRE DEL CHECK"].toLowerCase().includes(check_nombre)
+      );
+
+      displayResults(results);
+      document.getElementById("loader").style.display = "none";
+    }, 1500);
+  }
+
+  function clearSearch() {
+    document.getElementById("ip").value = "";
+    document.getElementById("hostname").value = "";
+    document.getElementById("descripcion").value = "";
+    document.getElementById("detalle").value = "";
+    document.getElementById("check_nombre").value = "";
+    document.getElementById("results").innerHTML = "";
+    document.getElementById("loader").style.display = "none";
+  }
+
+  function displayResults(results) {
+    if (results.length === 0) {
+      document.getElementById("results").innerHTML = `
+        <p style="color: #ffeb3b; text-align: center; font-size: 2em; font-weight: bold; text-transform: uppercase; text-shadow: 1px 1px 4px #000;">
+          No se encontraron resultados de tu búsqueda !!
+        </p>`;
+      return;
+    }
+
+    let table = "<table><thead><tr>";
+    headers.forEach(h => table += `<th>${h}</th>`);
+    table += "</tr></thead><tbody>";
+
+    results.forEach(row => {
+      table += "<tr>";
+      headers.forEach(h => table += `<td>${row[h]}</td>`);
+      table += "</tr>";
+    });
+
+    table += "</tbody></table>";
+    document.getElementById("results").innerHTML = table;
+  }
+
+  // Habilitar Enter como "Buscar"
+  document.querySelectorAll("input").forEach(input => {
+    input.addEventListener("keypress", function(event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        search();
+      }
+    });
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buscador de Escalamientos BancoEstado</title>
+  <link rel="icon" type="image/png" href="https://www.bancoestado.cl/favicon.ico">
+
+  <style>
+    body { font-family:'Segoe UI', Tahoma; background:#ff7f32; margin:0; padding:0; }
+
+    .header-logo { padding:10px 20px; }
+    .header-logo img { width:120px; }
+
+    h2 { text-align:center; color:#fff; font-size:1.8em; margin-bottom:20px; }
+
+    #search-container{
+      max-width:900px; margin:0 auto; padding:20px 40px;
+      background:rgba(255,255,255,0.15);
+      border-radius:10px;
+      box-shadow:0px 4px 10px rgba(0,0,0,0.2);
+    }
+
+    .form-row{ display:flex; gap:20px; margin-bottom:15px; flex-wrap:wrap; }
+    .form-group{ flex:1 1 48%; }
+
+    label{ color:white; font-weight:bold; }
+    input[type=text]{ width:100%; padding:8px; border-radius:6px; border:1px solid #ccc; }
+
+    button{
+      padding:12px 25px; border:none; border-radius:8px; color:white;
+      cursor:pointer; font-size:1.1em; font-weight:bold; margin:8px;
+    }
+    button:nth-of-type(1){ background:linear-gradient(45deg,#007bff,#00a1ff); }
+    button:nth-of-type(2){ background:linear-gradient(45deg,#777,#999); }
+
+    #panelUpload{
+      display:none; text-align:center; padding:15px;
+      background:rgba(0,0,0,0.12); border-radius:10px;
+      max-width:420px; margin:15px auto;
+    }
+    #zonaArchivo{ display:none; margin-top:20px; }
+
+    #loader{ display:none; text-align:center; margin-top:20px; }
+    #loader img{ width:80px; }
+
+    .table-container{
+      max-width:99%;
+      margin:30px auto;
+      //overflow-x:auto;
+    }
+
+    table{
+      width:100%; border-collapse:collapse; background:white;
+    }
+
+    th,td{
+      padding:10px;
+      border:1px solid #ddd;
+      font-size:0.9em;
+      white-space:nowrap;
+    }
+
+    th{ background:#d35400; color:white; }
+    tr:nth-child(even){ background:#fbeee6; }
+
+    /* OCULTAR GRUPO (columna 2) */
+    td:nth-child(2),
+    th:nth-child(2) {
+      display: none !important;
+    }
+
+    /* COLUMNAS LARGAS */
+    .col-wrap{
+      white-space: normal !important;
+      max-width:180px;
+      word-wrap: break-word;
+      line-height:1.3em;
+    }
+  </style>
+</head>
+<body>
+
+<div class="header-logo">
+  <img src="https://www.ovejeronoticias.cl/wp-content/uploads/2022/07/logo-banco-estado_fb-2048x2048.jpg">
+</div>
+
+<h2>Buscador de Escalamientos BancoEstado</h2>
+
+<div style="text-align:center;">
+  <button id="btnMostrarUpload" style="background:#444; opacity:0.7;">
+    🔐 Administrar Base de Datos
+  </button>
+</div>
+
+<div id="panelUpload">
+  <label style="color:white; opacity:0.7;">Contraseña:</label><br>
+  <input type="password" id="passUpload" style="opacity:0.6; padding:8px; width:200px; border-radius:6px; border:1px solid #ccc;"><br><br>
+
+  <button id="btnValidarPass" style="background:#0066cc;">Validar</button>
+
+  <div id="zonaArchivo">
+    <br>
+    <input type="file" id="fileUpload" accept=".xlsx,.xls,.csv"><br><br>
+
+    <button id="btnSubir" style="background:#28a745;">⬆ Subir archivo</button>
+  </div>
+</div>
+
+<div id="search-container">
+
+  <div class="form-row">
+    <div class="form-group">
+      <label>DIRECCION IP</label>
+      <input type="text" id="ip">
+    </div>
+    <div class="form-group">
+      <label>NOMBRE MAQUINA</label>
+      <input type="text" id="hostname">
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label>DESCRIPCION</label>
+      <input type="text" id="descripcion">
+    </div>
+    <div class="form-group">
+      <label>DETALLE</label>
+      <input type="text" id="detalle">
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group" style="flex:100%;">
+      <label>NOMBRE DEL CHECK</label>
+      <input type="text" id="check_nombre">
+    </div>
+  </div>
+
+  <div class="buttons">
+    <button onclick="buscar()">Buscar</button>
+    <button onclick="limpiar()">Borrar</button>
+  </div>
+</div>
+
+<div id="loader">
+  <img src="https://i.gifer.com/ZZ5H.gif">
+  <p style="color:white">Procesando información...</p>
+</div>
+
+<div id="results" class="table-container"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+<script>
+let tablaDT = null;
+let archivoTemporal = null;
+
+const PASSWORD_CORRECTA = "Banco2025!";
+
+document.getElementById("btnMostrarUpload").onclick = () => {
+  const p = document.getElementById("panelUpload");
+  p.style.display = (p.style.display === "none" || p.style.display === "") ? "block" : "none";
+};
+
+document.getElementById("btnValidarPass").onclick = () => {
+  const pass = document.getElementById("passUpload").value;
+  if (pass === PASSWORD_CORRECTA){
+    document.getElementById("zonaArchivo").style.display = "block";
+    alert("✔ Acceso concedido");
+  } else {
+    alert("❌ Contraseña incorrecta");
+  }
+};
+
+document.getElementById("fileUpload").addEventListener("change", e => {
+  archivoTemporal = e.target.files[0];
+});
+
+document.getElementById("btnSubir").onclick = () => {
+   debugger
+  if (!archivoTemporal){
+    alert("Seleccione un archivo primero.");
+    return;
+  }
+
+  procesarArchivo(archivoTemporal);
+  archivoTemporal = null;
+
+  document.getElementById("panelUpload").style.display = "none";
+  document.getElementById("zonaArchivo").style.display = "none";
+  document.getElementById("passUpload").value = "";
+  document.getElementById("fileUpload").value = "";
+
+  alert("✔ Archivo cargado correctamente.");
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+  mostrarLoader(true);
+
+  fetch("escalamientos.csv")
+    .then(r => r.text())
+    .then(text => {
+      const rows = parseCSV(text);
+      construirTabla(rows);
+      inicializarDataTable();
+      mostrarLoader(false);
+    })
+    .catch(() => alert("⚠ No se pudo cargar escalamientos.csv"));
+});
+
+function procesarArchivo(file){
+debugger
+  const reader = new FileReader();
+  const isCSV = file.name.toLowerCase().endsWith(".csv");
+
+  mostrarLoader(true);
+
+  reader.onload = event => {
+  debugger
+    if (isCSV){
+      const text = event.target.result;
+      const rows = parseCSV(text);
+      construirTabla(rows);
+    } else {
+      const data = new Uint8Array(event.target.result);
+      const wb = XLSX.read(data, {type:"array"});
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
+      rows.shift();
+      construirTabla(rows);
+    }
+    inicializarDataTable();
+    mostrarLoader(false);
+  };
+
+  if (isCSV) reader.readAsText(file, "UTF-8");
+  else reader.readAsArrayBuffer(file);
+}
+
+function mostrarLoader(v){
+  document.getElementById("loader").style.display = v ? "block" : "none";
+}
+
+function parseCSV(text){
+  const lines = text.trim().split(/\r?\n/);
+  const rows = [];
+  for (let i=1;i<lines.length;i++) rows.push(lines[i].split(","));
+  return rows;
+}
+
+function construirTabla(rows){
+  let html = `
+    <table id="tablaDatos" class="display" style="width:100%;">
+      <thead>
+        <tr>
+          <th>DIRECCION IP</th>
+          <th style="display:none;">GRUPO</th>
+          <th>NOMBRE MAQUINA</th>
+          <th class="col-wrap">DESCRIPCION</th>
+          <th>DETALLE</th>
+          <th>Check Nombre</th>
+          <th>PLATAFORMA</th>
+          <th>Horario hábil</th>
+          <th class="col-wrap">Horario no hábil</th>
+          <th class="col-wrap">Area y Notificacion</th>
+          <th>correo</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  rows.forEach(r=>{
+    html+="<tr>";
+
+    for (let i=0;i<11;i++){
+      let extraClass = "";
+
+      if (i === 3 || i === 8 || i === 9)
+        extraClass = "class='col-wrap'";
+
+      if (i === 1){
+        html += `<td style="display:none;"></td>`;
+        continue;
+      }
+
+      html += `<td ${extraClass}>${(r[i]||"").trim()}</td>`;
+    }
+
+    html+="</tr>";
+  });
+
+  html+="</tbody></table>";
+  document.getElementById("results").innerHTML = html;
+}
+
+function inicializarDataTable(){
+  if (tablaDT) tablaDT.destroy();
+
+  tablaDT = $("#tablaDatos").DataTable({
+    pageLength:100,
+    ordering:true,
+    paging:true,
+    language:{ url:"https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json" }
+  });
+}
+
+function buscar(){
+  if (!tablaDT) return;
+
+  tablaDT.columns().search("");
+
+  tablaDT.column(0).search($("#ip").val());
+  tablaDT.column(2).search($("#hostname").val());
+  tablaDT.column(3).search($("#descripcion").val());
+  tablaDT.column(4).search($("#detalle").val());
+  tablaDT.column(5).search($("#check_nombre").val());
+
+  tablaDT.draw();
+}
+
+function limpiar(){
+  $("#ip,#hostname,#descripcion,#detalle,#check_nombre").val("");
+  if (tablaDT){
+    tablaDT.columns().search("");
+    tablaDT.draw();
+  }
+}
+</script>
+
+</body>
+</html>

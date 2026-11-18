@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buscador Banco Estado</title>
+
+  <style>
+    body { font-family: Arial; background:#ff7f32; margin:0; padding:20px; }
+    table { width:100%; border-collapse: collapse; margin-top:20px; }
+    th, td { padding:8px; border:1px solid #ccc; }
+    th { background:#d35400; color:white; }
+  </style>
+</head>
+<body>
+
+<h2>Buscador de Escalamientos - BancoEstado</h2>
+
+<input type="file" id="excelFile" accept=".xlsx,.xls">
+
+<div id="results"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+<script>
+let tabla;
+
+document.getElementById("excelFile").addEventListener("change", function(e) {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+
+    reader.onload = function(event) {
+        const data = new Uint8Array(event.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
+
+        cargarTabla(json);
+    };
+
+    reader.readAsArrayBuffer(file);
+});
+
+function cargarTabla(json) {
+    let html = `
+        <table id="tablaDatos" class="display">
+            <thead>
+                <tr>
+                    <th>DIRECCION IP</th>
+                    <th>GRUPO</th>
+                    <th>NOMBRE MAQUINA</th>
+                    <th>DESCRIPCION</th>
+                    <th>DETALLE</th>
+                    <th>CHECK</th>
+                    <th>PLATAFORMA</th>
+                    <th>HORARIO HABIL</th>
+                    <th>HORARIO NO HABIL</th>
+                    <th>AREA</th>
+                    <th>CORREO</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    json.forEach(row => {
+        html += `
+            <tr>
+                <td>${row["DIRECCION IP"]}</td>
+                <td>${row["GRUPO"]}</td>
+                <td>${row["NOMBRE MAQUINA"]}</td>
+                <td>${row["DESCRIPCION"]}</td>
+                <td>${row["DETALLE"]}</td>
+                <td>${row["Check Nombre"]}</td>
+                <td>${row["PLATAFORMA"]}</td>
+                <td>${row["Horario hábil"]}</td>
+                <td>${row["Horario no hábil"]}</td>
+                <td>${row["Area y Notificacion"]}</td>
+                <td>${row["correo"]}</td>
+            </tr>
+        `;
+    });
+
+    html += `</tbody></table>`;
+    document.getElementById("results").innerHTML = html;
+
+    if (tabla) tabla.destroy();
+
+    tabla = new DataTable("#tablaDatos", { pageLength: 10 });
+}
+</script>
+
+</body>
+</html>
